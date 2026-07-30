@@ -1,6 +1,7 @@
-import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, Clock, Users, Building2, ShieldCheck, Menu } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { LayoutDashboard, Clock, Users, Building2, ShieldCheck, Menu, LogOut } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import toast from 'react-hot-toast'
 
 const NAV_ITEMS = [
   { to: '/dashboard',  label: 'Home',       icon: LayoutDashboard, roles: ['committee', 'head', 'exco', 'secretary'] },
@@ -11,11 +12,18 @@ const NAV_ITEMS = [
 ]
 
 export default function TopBar({ onMenuToggle }) {
-  const { profile } = useAuth()
+  const { profile, signOut } = useAuth()
+  const navigate = useNavigate()
 
   const visibleItems = NAV_ITEMS.filter(
     item => profile && item.roles.includes(profile.role)
   )
+
+  async function handleSignOut() {
+    await signOut()
+    toast.success('Signed out')
+    navigate('/login')
+  }
 
   return (
     <>
@@ -31,6 +39,14 @@ export default function TopBar({ onMenuToggle }) {
         </button>
         <img src="/spcc_logo.png" alt="SPCC" className="w-7 h-7 rounded object-contain" />
         <span className="text-white font-bold ml-2 text-sm">SPCC Points</span>
+
+        <button
+          onClick={handleSignOut}
+          className="ml-auto btn-icon btn-ghost text-green-300 hover:text-white"
+          aria-label="Sign out"
+        >
+          <LogOut size={18} />
+        </button>
       </header>
 
       {/* Mobile bottom nav */}
