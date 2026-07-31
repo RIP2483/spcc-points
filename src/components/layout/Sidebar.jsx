@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Clock, Users, Building2,
-  ShieldCheck, LogOut, ChevronRight, X
+  ShieldCheck, LogOut, ChevronRight, X, KeyRound
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import ChangePasswordModal from '../admin/ChangePasswordModal'
 import toast from 'react-hot-toast'
 
 const NAV_ITEMS = [
@@ -17,6 +19,7 @@ const NAV_ITEMS = [
 export default function Sidebar({ mobileOpen, onClose }) {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
+  const [showChangePw, setShowChangePw] = useState(false)
 
   const visibleItems = NAV_ITEMS.filter(
     item => profile && item.roles.includes(profile.role)
@@ -105,8 +108,23 @@ export default function Sidebar({ mobileOpen, onClose }) {
             <LogOut size={16} />
             Sign Out
           </button>
+
+          <button
+            onClick={() => setShowChangePw(true)}
+            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg mt-1
+                       text-green-400 hover:text-green-200 hover:bg-green-800/30
+                       text-xs font-medium transition-all duration-200"
+            id="sidebar-changepw-btn"
+          >
+            <KeyRound size={13} />
+            Change Password
+          </button>
         </div>
       </aside>
+
+      {showChangePw && (
+        <ChangePasswordModal onClose={() => setShowChangePw(false)} />
+      )}
     </>
   )
 }
