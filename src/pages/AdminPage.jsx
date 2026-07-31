@@ -5,7 +5,8 @@ import { roleBadgeClass, roleLabel, formatAmount, formatDate } from '../lib/perm
 import CreateUserModal from '../components/admin/CreateUserModal'
 import EditTransactionModal from '../components/admin/EditTransactionModal'
 import AddPointsModal from '../components/transactions/AddPointsModal'
-import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock } from 'lucide-react'
+import ChangePasswordModal from '../components/admin/ChangePasswordModal'
+import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, KeyRound } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminPage() {
@@ -19,6 +20,7 @@ export default function AdminPage() {
   const [showAddPoints, setShowAddPoints] = useState(false)
   const [editTx, setEditTx] = useState(null)
   const [selectedMember, setSelectedMember] = useState(null)
+  const [changePwMember, setChangePwMember] = useState(null)
 
   const fetchMembers = useCallback(async () => {
     const { data: allUsers } = await supabase
@@ -204,6 +206,14 @@ export default function AdminPage() {
                           >
                             <Plus size={14} />
                           </button>
+                          <button
+                            onClick={() => setChangePwMember(m)}
+                            className="btn btn-sm btn-secondary btn-icon"
+                            title="Reset password"
+                            id={`admin-pw-${m.id}`}
+                          >
+                            <KeyRound size={14} />
+                          </button>
                           {m.id !== profile?.id && (
                             <button
                               onClick={() => handleDeleteUser(m.id, m.name)}
@@ -302,6 +312,12 @@ export default function AdminPage() {
           transaction={editTx}
           onClose={() => setEditTx(null)}
           onSuccess={fetchAll}
+        />
+      )}
+      {changePwMember && (
+        <ChangePasswordModal
+          member={changePwMember}
+          onClose={() => setChangePwMember(null)}
         />
       )}
     </div>

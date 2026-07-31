@@ -8,7 +8,6 @@ const ROLES = [
   { value: 'committee', label: 'Committee Member' },
   { value: 'head',      label: 'Department Head' },
   { value: 'exco',      label: 'Exco' },
-  { value: 'secretary', label: 'Secretary' },
 ]
 const DEPARTMENTS = [
   { value: 'events', label: 'Events' },
