@@ -82,8 +82,8 @@ export default function Sidebar({ mobileOpen, onClose }) {
           ))}
         </nav>
 
-        {/* User footer */}
-        <div className="border-t border-green-800/40 p-4">
+        {/* User footer — always pinned to bottom */}
+        <div className="mt-auto border-t border-green-800/40 p-4">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-9 h-9 rounded-full bg-green-700 flex items-center justify-center
                             text-white font-bold text-sm flex-shrink-0">
@@ -96,10 +96,14 @@ export default function Sidebar({ mobileOpen, onClose }) {
           </div>
           <button
             onClick={handleSignOut}
-            className="btn btn-ghost w-full text-green-300 hover:text-white justify-start text-sm"
+            className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg
+                       bg-green-800/50 hover:bg-red-900/60 text-green-200 hover:text-white
+                       text-sm font-semibold transition-all duration-200 border border-green-700/40
+                       hover:border-red-700/60"
+            id="sidebar-signout-btn"
           >
-            <LogOut size={15} />
-            Sign out
+            <LogOut size={16} />
+            Sign Out
           </button>
         </div>
       </aside>
