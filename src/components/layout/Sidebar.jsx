@@ -67,8 +67,8 @@ export default function Sidebar({ mobileOpen, onClose }) {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 py-4 overflow-y-auto">
+        {/* Navigation links */}
+        <nav className="py-4 px-3">
           {visibleItems.map(item => (
             <NavLink
               key={item.to}
@@ -85,40 +85,36 @@ export default function Sidebar({ mobileOpen, onClose }) {
           ))}
         </nav>
 
-        {/* User footer — always pinned to bottom */}
-        <div className="mt-auto border-t border-green-800/40 p-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-full bg-green-700 flex items-center justify-center
-                            text-white font-bold text-sm flex-shrink-0">
-              {initials}
-            </div>
-            <div className="min-w-0">
-              <p className="text-white font-semibold text-sm truncate">{profile?.name ?? '—'}</p>
-              <p className="text-green-400 text-xs truncate capitalize">{profile?.role}</p>
-            </div>
-          </div>
+        {/* Action buttons — Sign Out + Change Password */}
+        <div className="px-3 pb-3 space-y-1 border-t border-green-800/40 pt-3">
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-2 w-full px-3 py-2.5 rounded-lg
-                       bg-green-800/50 hover:bg-red-900/60 text-green-200 hover:text-white
-                       text-sm font-semibold transition-all duration-200 border border-green-700/40
-                       hover:border-red-700/60"
+            className="sidebar-link w-full text-left text-green-200 hover:text-white hover:bg-red-900/40"
             id="sidebar-signout-btn"
           >
-            <LogOut size={16} />
-            Sign Out
+            <LogOut size={18} />
+            <span>Sign Out</span>
           </button>
-
           <button
             onClick={() => setShowChangePw(true)}
-            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg mt-1
-                       text-green-400 hover:text-green-200 hover:bg-green-800/30
-                       text-xs font-medium transition-all duration-200"
+            className="sidebar-link w-full text-left text-green-300 hover:text-white"
             id="sidebar-changepw-btn"
           >
-            <KeyRound size={13} />
-            Change Password
+            <KeyRound size={18} />
+            <span>Change Password</span>
           </button>
+        </div>
+
+        {/* User info strip — pinned to bottom */}
+        <div className="mt-auto border-t border-green-800/40 px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-green-700 flex items-center justify-center
+                          text-white font-bold text-xs flex-shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="text-white font-semibold text-sm truncate">{profile?.name ?? '—'}</p>
+            <p className="text-green-400 text-xs truncate capitalize">{profile?.role}</p>
+          </div>
         </div>
       </aside>
 
