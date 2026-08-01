@@ -5,7 +5,7 @@
  * Rules:
  * - secretary: can target anyone (including themselves)
  * - exco: can target other exco + heads + secretary; CANNOT target committee or themselves
- * - head: can target committee in own dept + other heads; CANNOT target exco, secretary, or themselves
+ * - head: can target committee in own dept + other heads + exco; CANNOT target secretary or themselves
  * - committee: cannot target anyone
  */
 export function canAwardTo(actor, target) {
@@ -25,7 +25,7 @@ export function canAwardTo(actor, target) {
     if (tId === aId) return false
     if (tRole === 'committee') return tDept === aDept
     if (tRole === 'head') return true
-    // heads CANNOT award to exco or secretary
+    if (tRole === 'exco') return true   // can award but NOT view
     return false
   }
 
