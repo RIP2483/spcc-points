@@ -22,7 +22,7 @@ create index if not exists users_role_idx       on public.users(role);
 create table if not exists public.point_transactions (
   id          uuid primary key default gen_random_uuid(),
   member_id   uuid not null references public.users(id) on delete cascade,
-  awarded_by  uuid not null references public.users(id) on delete restrict,
+  awarded_by  uuid references public.users(id) on delete set null,
   amount      integer not null,   -- positive = award, negative = deduction
   reason      text not null,
   category    text,               -- nullable; reserved for V2 fixed categories
