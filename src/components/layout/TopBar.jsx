@@ -37,7 +37,7 @@ export default function TopBar({ onMenuToggle }) {
         >
           <Menu size={22} />
         </button>
-        <img src="/spcc_logo.png" alt="SPCC" className="w-7 h-7 rounded object-contain" />
+        <img src="/spcc_logo.png" alt="SPCC" className="w-9 h-9 object-contain" />
         <span className="text-white font-bold ml-2 text-sm">SPCC Points</span>
 
         <button

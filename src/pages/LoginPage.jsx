@@ -34,10 +34,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm animate-fade-in">
         {/* Logo card */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl
-                          bg-white/10 backdrop-blur-sm border border-white/20 mb-4">
-            <img src="/spcc_logo.png" alt="SPCC Logo" className="w-14 h-14 object-contain" />
-          </div>
+          <img src="/spcc_logo.png" alt="SPCC Logo" className="w-24 h-24 object-contain mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-white">SPCC Points Tracker</h1>
           <p className="text-green-200 text-sm mt-1">Sunway Pakistani Cultural Club</p>
         </div>

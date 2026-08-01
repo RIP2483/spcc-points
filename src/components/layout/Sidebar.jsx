@@ -51,7 +51,7 @@ export default function Sidebar({ mobileOpen, onClose }) {
           <img
             src="/spcc_logo.png"
             alt="SPCC Logo"
-            className="w-9 h-9 rounded-lg object-contain bg-white/10 p-0.5"
+            className="w-11 h-11 object-contain"
           />
           <div className="min-w-0">
             <p className="text-white font-bold text-sm leading-tight truncate">SPCC</p>
