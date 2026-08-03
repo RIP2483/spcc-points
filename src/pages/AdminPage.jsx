@@ -8,7 +8,7 @@ import EditUserModal from '../components/admin/EditUserModal'
 import EditTransactionModal from '../components/admin/EditTransactionModal'
 import DeleteTransactionModal from '../components/admin/DeleteTransactionModal'
 import AddPointsModal from '../components/transactions/AddPointsModal'
-import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download, History } from 'lucide-react'
+import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download, History, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminPage() {
@@ -25,6 +25,9 @@ export default function AdminPage() {
   const [deleteTx, setDeleteTx] = useState(null)
   const [editUser, setEditUser] = useState(null)
   const [selectedMember, setSelectedMember] = useState(null)
+
+  const ITEMS_PER_PAGE = 20
+  const [txPage, setTxPage] = useState(1)
 
   const fetchMembers = useCallback(async () => {
     const { data: allUsers } = await supabase
@@ -75,6 +78,7 @@ export default function AdminPage() {
   }, [fetchMembers, fetchTransactions, fetchAuditLog])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+  useEffect(() => { setTxPage(1) }, [search, tab])
 
   async function handleDeleteUser(userId, userName) {
     if (!window.confirm(`Delete ${userName}'s account? This cannot be undone.`)) return
@@ -93,6 +97,9 @@ export default function AdminPage() {
     tx.reason?.toLowerCase().includes(search.toLowerCase()) ||
     tx.awarded_by_user?.name?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const totalTxPages = Math.ceil(filteredTx.length / ITEMS_PER_PAGE) || 1
+  const paginatedTx = filteredTx.slice((txPage - 1) * ITEMS_PER_PAGE, txPage * ITEMS_PER_PAGE)
 
   function handleExportCsv() {
     if (tab === 'members') {
@@ -293,7 +300,7 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredTx.map(tx => (
+                  {paginatedTx.map(tx => (
                     <tr key={tx.id}>
                       <td className="font-semibold text-green-900">{tx.member?.name ?? '—'}</td>
                       <td>
@@ -322,6 +329,36 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Pagination bar */}
+          {filteredTx.length > ITEMS_PER_PAGE && (
+            <div className="flex items-center justify-between px-5 py-3 border-t border-sand-200 text-sm text-green-700 bg-sand-50/50 flex-wrap gap-2">
+              <p className="font-medium text-xs md:text-sm">
+                Showing <strong>{(txPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(txPage * ITEMS_PER_PAGE, filteredTx.length)}</strong> of <strong>{filteredTx.length}</strong> transactions
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setTxPage(p => Math.max(1, p - 1))}
+                  disabled={txPage === 1}
+                  className="btn btn-sm btn-secondary"
+                  id="tx-prev-page-btn"
+                >
+                  <ChevronLeft size={16} /> Prev
+                </button>
+                <span className="font-semibold text-xs text-green-900 px-1">
+                  Page {txPage} of {totalTxPages}
+                </span>
+                <button
+                  onClick={() => setTxPage(p => Math.min(totalTxPages, p + 1))}
+                  disabled={txPage === totalTxPages}
+                  className="btn btn-sm btn-secondary"
+                  id="tx-next-page-btn"
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
             </div>
           )}
         </div>

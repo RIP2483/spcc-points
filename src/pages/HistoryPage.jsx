@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { formatAmount, formatDate } from '../lib/permissions'
 import { downloadCsv } from '../lib/csvExport'
-import { Clock, Search, Download } from 'lucide-react'
+import { Clock, Search, Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function HistoryPage() {
@@ -11,6 +11,8 @@ export default function HistoryPage() {
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const ITEMS_PER_PAGE = 20
+  const [page, setPage] = useState(1)
 
   const fetchTx = useCallback(async () => {
     if (!profile) return
@@ -33,6 +35,11 @@ export default function HistoryPage() {
     tx.reason.toLowerCase().includes(search.toLowerCase()) ||
     tx.awarded_by_user?.name?.toLowerCase().includes(search.toLowerCase())
   )
+
+  useEffect(() => { setPage(1) }, [search])
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1
+  const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
   const totalBalance = transactions.reduce((a, t) => a + t.amount, 0)
 
@@ -117,7 +124,7 @@ export default function HistoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map(tx => (
+                {paginated.map(tx => (
                   <tr key={tx.id}>
                     <td>
                       <span className={`font-bold text-base ${tx.amount >= 0 ? 'points-positive' : 'points-negative'}`}>
@@ -137,6 +144,36 @@ export default function HistoryPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination bar */}
+        {filtered.length > ITEMS_PER_PAGE && (
+          <div className="flex items-center justify-between px-5 py-3 border-t border-sand-200 text-sm text-green-700 bg-sand-50/50 flex-wrap gap-2">
+            <p className="font-medium text-xs md:text-sm">
+              Showing <strong>{(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, filtered.length)}</strong> of <strong>{filtered.length}</strong> transactions
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="btn btn-sm btn-secondary"
+                id="history-prev-page-btn"
+              >
+                <ChevronLeft size={16} /> Prev
+              </button>
+              <span className="font-semibold text-xs text-green-900 px-1">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="btn btn-sm btn-secondary"
+                id="history-next-page-btn"
+              >
+                Next <ChevronRight size={16} />
+              </button>
+            </div>
           </div>
         )}
       </div>
