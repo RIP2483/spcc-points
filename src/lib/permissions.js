@@ -3,11 +3,10 @@
  * points for `target` (the recipient profile).
  *
  * Rules:
- * - secretary: can target anyone EXCEPT other secretaries/themselves (overseer role)
- * - exco: can target other exco + heads; CANNOT target committee, secretary, or themselves
+ * - secretary: can target anyone (including themselves)
+ * - exco: can target other exco + heads + secretary; CANNOT target committee or themselves
  * - head: can target committee in own dept + other heads + exco; CANNOT target secretary or themselves
  * - committee: cannot target anyone
- * - NO ONE (including secretary herself) can award or deduct points for a secretary
  */
 export function canAwardTo(actor, target) {
   if (!actor || !target) return false
@@ -15,14 +14,11 @@ export function canAwardTo(actor, target) {
   const { role: aRole, department: aDept, id: aId } = actor
   const { role: tRole, department: tDept, id: tId } = target
 
-  // Secretary is an overseer and cannot receive or lose points
-  if (tRole === 'secretary') return false
-
   if (aRole === 'secretary') return true
 
   if (aRole === 'exco') {
     if (tId === aId) return false
-    return tRole === 'exco' || tRole === 'head'
+    return tRole === 'exco' || tRole === 'head' || tRole === 'secretary'
   }
 
   if (aRole === 'head') {

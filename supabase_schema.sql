@@ -116,20 +116,21 @@ create policy "pt: head inserts" on public.point_transactions
   for insert with check (
     public.my_role() = 'head'
     and member_id != auth.uid()
-    and member_id not in (select id from public.users where role = 'secretary')
     and awarded_by = auth.uid()
     and member_id in (
       select id from public.users
       where (role = 'committee' and department = public.my_department())
-         or role in ('head','exco')
+         or role in ('head','exco','secretary')
     )
   );
 
--- Exco can insert for other exco, heads (but NOT committee, NOT secretary, NOT themselves)
+-- Exco can insert for other exco, heads, secretary (but NOT committee, NOT themselves)
 create policy "pt: exco inserts" on public.point_transactions
   for insert with check (
     public.my_role() = 'exco'
     and member_id != auth.uid()
+    and awarded_by = auth.uid()
+    and member_id in (
       select id from public.users where role in ('exco','head','secretary')
     )
   );

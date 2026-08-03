@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
-import { canAwardTo, roleBadgeClass, roleLabel, formatAmount, formatDate } from '../lib/permissions'
+import { roleBadgeClass, roleLabel, formatAmount, formatDate } from '../lib/permissions'
 import { downloadCsv } from '../lib/csvExport'
 import CreateUserModal from '../components/admin/CreateUserModal'
 import EditUserModal from '../components/admin/EditUserModal'
@@ -236,26 +236,20 @@ export default function AdminPage() {
                       <td><span className={roleBadgeClass(m.role)}>{roleLabel(m.role)}</span></td>
                       <td className="capitalize text-green-700">{m.department ?? '—'}</td>
                       <td>
-                        {m.role === 'secretary' ? (
-                          <span className="text-green-500 font-medium">—</span>
-                        ) : (
-                          <span className={`font-bold ${m.balance >= 0 ? 'points-positive' : 'points-negative'}`}>
-                            {m.balance}
-                          </span>
-                        )}
+                        <span className={`font-bold ${m.balance >= 0 ? 'points-positive' : 'points-negative'}`}>
+                          {m.balance}
+                        </span>
                       </td>
                       <td>
                         <div className="flex gap-2">
-                          {canAwardTo(profile, m) && (
-                            <button
-                              onClick={() => { setSelectedMember(m); setShowAddPoints(true) }}
-                              className="btn btn-sm btn-primary btn-icon"
-                              title="Award points"
-                              id={`admin-award-${m.id}`}
-                            >
-                              <Plus size={14} />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => { setSelectedMember(m); setShowAddPoints(true) }}
+                            className="btn btn-sm btn-primary btn-icon"
+                            title="Award points"
+                            id={`admin-award-${m.id}`}
+                          >
+                            <Plus size={14} />
+                          </button>
                           <button
                             onClick={() => setEditUser(m)}
                             className="btn btn-sm btn-secondary btn-icon"

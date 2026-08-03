@@ -134,16 +134,10 @@ export default function MembersPage() {
                 </div>
 
                 <div className="text-right mr-2">
-                  {member.role === 'secretary' ? (
-                    <span className="text-sm font-medium text-green-500">—</span>
-                  ) : (
-                    <>
-                      <p className={`text-xl font-black ${member.balance >= 0 ? 'points-positive' : 'points-negative'}`}>
-                        {member.balance}
-                      </p>
-                      <p className="text-xs text-green-500">pts</p>
-                    </>
-                  )}
+                  <p className={`text-xl font-black ${member.balance >= 0 ? 'points-positive' : 'points-negative'}`}>
+                    {member.balance}
+                  </p>
+                  <p className="text-xs text-green-500">pts</p>
                 </div>
 
                 <div className="flex gap-2 items-center">
