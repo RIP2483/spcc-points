@@ -148,7 +148,8 @@ body {
 /* ─── Form Inputs ──────────────────────────────────────── */
 .input {
   width: 100%;
-  padding: 0.625rem 0.875rem;
+  padding-block: 0.625rem;
+  padding-inline: 0.875rem;
   border: 1.5px solid var(--color-sand-300);
   border-radius: 0.625rem;
   font-family: var(--font-sans);
@@ -157,6 +158,12 @@ body {
   color: var(--color-green-950);
   transition: border-color 0.2s, box-shadow 0.2s;
   outline: none;
+}
+.input:is(.pl-9, .pl-10, .pl-11, .pl-12) {
+  padding-left: 2.75rem !important;
+}
+.input:is(.pr-9, .pr-10, .pr-11, .pr-12) {
+  padding-right: 2.75rem !important;
 }
 .input:focus {
   border-color: var(--color-green-600);

@@ -91,10 +91,10 @@ export default function MembersPage() {
 
       {/* Search */}
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-green-500" />
+        <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-green-500 pointer-events-none" />
         <input
           type="search"
-          className="input pl-9"
+          className="input !pl-11"
           placeholder="Search by name, role, or department…"
           value={search}
           onChange={e => setSearch(e.target.value)}
