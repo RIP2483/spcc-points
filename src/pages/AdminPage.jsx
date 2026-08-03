@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { roleBadgeClass, roleLabel, formatAmount, formatDate } from '../lib/permissions'
+import { downloadCsv } from '../lib/csvExport'
 import CreateUserModal from '../components/admin/CreateUserModal'
+import EditUserModal from '../components/admin/EditUserModal'
 import EditTransactionModal from '../components/admin/EditTransactionModal'
 import AddPointsModal from '../components/transactions/AddPointsModal'
-import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock } from 'lucide-react'
+import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminPage() {
@@ -18,12 +20,13 @@ export default function AdminPage() {
   const [showCreateUser, setShowCreateUser] = useState(false)
   const [showAddPoints, setShowAddPoints] = useState(false)
   const [editTx, setEditTx] = useState(null)
+  const [editUser, setEditUser] = useState(null)
   const [selectedMember, setSelectedMember] = useState(null)
 
   const fetchMembers = useCallback(async () => {
     const { data: allUsers } = await supabase
       .from('users')
-      .select('id, name, role, department')
+      .select('id, name, email, role, department')
       .order('name')
 
     const ids = allUsers?.map(u => u.id) ?? []
@@ -86,6 +89,33 @@ export default function AdminPage() {
     tx.awarded_by_user?.name?.toLowerCase().includes(search.toLowerCase())
   )
 
+  function handleExportCsv() {
+    if (tab === 'members') {
+      const headers = ['Name', 'Email', 'Role', 'Department', 'Points Balance']
+      const rows = filteredMembers.map(m => [
+        m.name,
+        m.email || '—',
+        roleLabel(m.role),
+        m.department || '—',
+        m.balance,
+      ])
+      downloadCsv('SPCC_Members_Report', headers, rows)
+      toast.success('Members CSV exported!')
+    } else {
+      const headers = ['Member Name', 'Member Role', 'Amount', 'Reason', 'Awarded By', 'Date']
+      const rows = filteredTx.map(t => [
+        t.member?.name || '—',
+        roleLabel(t.member?.role || '—'),
+        formatAmount(t.amount),
+        t.reason,
+        t.awarded_by_user?.name || '—',
+        formatDate(t.created_at),
+      ])
+      downloadCsv('SPCC_Transactions_Report', headers, rows)
+      toast.success('Transactions CSV exported!')
+    }
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
       {/* Header */}
@@ -99,6 +129,9 @@ export default function AdminPage() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <button onClick={handleExportCsv} className="btn btn-secondary" id="admin-export-csv-btn">
+            <Download size={16} /> Export CSV
+          </button>
           <button onClick={() => setShowAddPoints(true)} className="btn btn-primary" id="admin-award-btn">
             <Plus size={16} /> Award Points
           </button>
@@ -204,6 +237,14 @@ export default function AdminPage() {
                           >
                             <Plus size={14} />
                           </button>
+                          <button
+                            onClick={() => setEditUser(m)}
+                            className="btn btn-sm btn-secondary btn-icon"
+                            title="Edit profile"
+                            id={`admin-edit-user-${m.id}`}
+                          >
+                            <Pencil size={14} />
+                          </button>
                           {m.id !== profile?.id && (
                             <button
                               onClick={() => handleDeleteUser(m.id, m.name)}
@@ -289,6 +330,13 @@ export default function AdminPage() {
       {/* Modals */}
       {showCreateUser && (
         <CreateUserModal onClose={() => setShowCreateUser(false)} onSuccess={fetchAll} />
+      )}
+      {editUser && (
+        <EditUserModal
+          member={editUser}
+          onClose={() => setEditUser(null)}
+          onSuccess={fetchAll}
+        />
       )}
       {showAddPoints && (
         <AddPointsModal

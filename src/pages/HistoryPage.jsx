@@ -2,7 +2,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
 import { formatAmount, formatDate } from '../lib/permissions'
-import { Clock, Search } from 'lucide-react'
+import { downloadCsv } from '../lib/csvExport'
+import { Clock, Search, Download } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 export default function HistoryPage() {
   const { profile } = useAuth()
@@ -34,15 +36,33 @@ export default function HistoryPage() {
 
   const totalBalance = transactions.reduce((a, t) => a + t.amount, 0)
 
+  function handleExportCsv() {
+    if (!filtered.length) return toast.error('No transactions to export')
+    const headers = ['Amount', 'Reason', 'Awarded By', 'Date']
+    const rows = filtered.map(t => [
+      formatAmount(t.amount),
+      t.reason,
+      t.awarded_by_user?.name || '—',
+      formatDate(t.created_at),
+    ])
+    downloadCsv(`${profile?.name || 'My'}_Point_History`, headers, rows)
+    toast.success('History CSV exported!')
+  }
+
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold text-green-900 flex items-center gap-2">
-          <Clock size={22} /> My Point History
-        </h1>
-        <p className="text-green-600 text-sm mt-0.5">
-          Complete record of your points — {transactions.length} transactions total
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-green-900 flex items-center gap-2">
+            <Clock size={22} /> My Point History
+          </h1>
+          <p className="text-green-600 text-sm mt-0.5">
+            Complete record of your points — {transactions.length} transactions total
+          </p>
+        </div>
+        <button onClick={handleExportCsv} className="btn btn-secondary" id="history-export-csv-btn">
+          <Download size={16} /> Export CSV
+        </button>
       </div>
 
       {/* Summary banner */}
