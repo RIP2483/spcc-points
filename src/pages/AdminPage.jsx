@@ -6,8 +6,9 @@ import { downloadCsv } from '../lib/csvExport'
 import CreateUserModal from '../components/admin/CreateUserModal'
 import EditUserModal from '../components/admin/EditUserModal'
 import EditTransactionModal from '../components/admin/EditTransactionModal'
+import DeleteTransactionModal from '../components/admin/DeleteTransactionModal'
 import AddPointsModal from '../components/transactions/AddPointsModal'
-import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download } from 'lucide-react'
+import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download, History } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminPage() {
@@ -15,11 +16,13 @@ export default function AdminPage() {
   const [tab, setTab] = useState('members')
   const [members, setMembers] = useState([])
   const [transactions, setTransactions] = useState([])
+  const [auditLog, setAuditLog] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showCreateUser, setShowCreateUser] = useState(false)
   const [showAddPoints, setShowAddPoints] = useState(false)
   const [editTx, setEditTx] = useState(null)
+  const [deleteTx, setDeleteTx] = useState(null)
   const [editUser, setEditUser] = useState(null)
   const [selectedMember, setSelectedMember] = useState(null)
 
@@ -56,11 +59,20 @@ export default function AdminPage() {
     setTransactions(data ?? [])
   }, [])
 
+  const fetchAuditLog = useCallback(async () => {
+    const { data } = await supabase
+      .from('audit_log')
+      .select('id, action, reason, details, created_at, performed_by_user:performed_by(name)')
+      .order('created_at', { ascending: false })
+      .limit(200)
+    setAuditLog(data ?? [])
+  }, [])
+
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    await Promise.all([fetchMembers(), fetchTransactions()])
+    await Promise.all([fetchMembers(), fetchTransactions(), fetchAuditLog()])
     setLoading(false)
-  }, [fetchMembers, fetchTransactions])
+  }, [fetchMembers, fetchTransactions, fetchAuditLog])
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
@@ -69,13 +81,6 @@ export default function AdminPage() {
     const { error } = await supabase.from('users').delete().eq('id', userId)
     if (error) toast.error(error.message)
     else { toast.success(`${userName} removed`); fetchAll() }
-  }
-
-  async function handleDeleteTx(tx) {
-    if (!window.confirm(`Delete this transaction (${formatAmount(tx.amount)} pts for ${tx.member?.name})?`)) return
-    const { error } = await supabase.from('point_transactions').delete().eq('id', tx.id)
-    if (error) toast.error(error.message)
-    else { toast.success('Transaction deleted'); fetchAll() }
   }
 
   const filteredMembers = members.filter(m =>
@@ -161,8 +166,9 @@ export default function AdminPage() {
       {/* Tabs */}
       <div className="flex gap-1 bg-sand-200 rounded-xl p-1 w-fit">
         {[
-          { id: 'members', label: 'Members', icon: Users },
+          { id: 'members',     label: 'Members',     icon: Users },
           { id: 'transactions', label: 'Transactions', icon: Clock },
+          { id: 'auditlog',    label: 'Audit Log',   icon: History },
         ].map(t => (
           <button
             key={t.id}
@@ -300,24 +306,70 @@ export default function AdminPage() {
                       <td className="text-sm text-green-600 whitespace-nowrap">{formatDate(tx.created_at)}</td>
                       <td>
                         <div className="flex gap-2">
-                          <button
-                            onClick={() => setEditTx(tx)}
-                            className="btn btn-sm btn-secondary btn-icon"
-                            title="Edit"
-                            id={`admin-edit-tx-${tx.id}`}
-                          >
+                          <button onClick={() => setEditTx(tx)}
+                            className="btn btn-sm btn-secondary btn-icon" title="Edit"
+                            id={`admin-edit-tx-${tx.id}`}>
                             <Pencil size={14} />
                           </button>
-                          <button
-                            onClick={() => handleDeleteTx(tx)}
-                            className="btn btn-sm btn-danger btn-icon"
-                            title="Delete"
-                            id={`admin-delete-tx-${tx.id}`}
-                          >
+                          <button onClick={() => setDeleteTx(tx)}
+                            className="btn btn-sm btn-danger btn-icon" title="Delete"
+                            id={`admin-delete-tx-${tx.id}`}>
                             <Trash2 size={14} />
                           </button>
                         </div>
                       </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Audit Log tab */}
+      {tab === 'auditlog' && (
+        <div className="card overflow-hidden">
+          {loading ? (
+            <div className="p-6 space-y-3">
+              {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-14 rounded-lg" />)}
+            </div>
+          ) : auditLog.length === 0 ? (
+            <div className="empty-state">
+              <History size={32} className="mx-auto mb-3 opacity-30" />
+              <p className="font-semibold">No audit entries yet</p>
+              <p className="text-sm mt-1">Edits and deletions will appear here.</p>
+            </div>
+          ) : (
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Action</th>
+                    <th>Member Affected</th>
+                    <th>Reason for Change</th>
+                    <th>Done By</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {auditLog.map(entry => (
+                    <tr key={entry.id}>
+                      <td>
+                        <span className={`badge ${
+                          entry.action === 'transaction_deleted'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {entry.action === 'transaction_deleted' ? '🗑 Deleted' : '✏️ Edited'}
+                        </span>
+                      </td>
+                      <td className="font-semibold text-green-900">
+                        {entry.details?.member_name ?? '—'}
+                      </td>
+                      <td className="max-w-xs text-sm text-green-800">{entry.reason}</td>
+                      <td className="text-sm text-green-700">{entry.performed_by_user?.name ?? '—'}</td>
+                      <td className="text-sm text-green-600 whitespace-nowrap">{formatDate(entry.created_at)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -332,11 +384,7 @@ export default function AdminPage() {
         <CreateUserModal onClose={() => setShowCreateUser(false)} onSuccess={fetchAll} />
       )}
       {editUser && (
-        <EditUserModal
-          member={editUser}
-          onClose={() => setEditUser(null)}
-          onSuccess={fetchAll}
-        />
+        <EditUserModal member={editUser} onClose={() => setEditUser(null)} onSuccess={fetchAll} />
       )}
       {showAddPoints && (
         <AddPointsModal
@@ -346,11 +394,10 @@ export default function AdminPage() {
         />
       )}
       {editTx && (
-        <EditTransactionModal
-          transaction={editTx}
-          onClose={() => setEditTx(null)}
-          onSuccess={fetchAll}
-        />
+        <EditTransactionModal transaction={editTx} onClose={() => setEditTx(null)} onSuccess={fetchAll} />
+      )}
+      {deleteTx && (
+        <DeleteTransactionModal transaction={deleteTx} onClose={() => setDeleteTx(null)} onSuccess={fetchAll} />
       )}
     </div>
   )
