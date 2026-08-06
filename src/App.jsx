@@ -7,6 +7,7 @@ import AppLayout from './components/layout/AppLayout'
 import LoginPage        from './pages/LoginPage'
 import DashboardPage    from './pages/DashboardPage'
 import HistoryPage      from './pages/HistoryPage'
+import LeaderboardPage  from './pages/LeaderboardPage'
 import DepartmentPage   from './pages/DepartmentPage'
 import MembersPage      from './pages/MembersPage'
 import AdminPage        from './pages/AdminPage'
@@ -29,8 +30,9 @@ export default function App() {
             }
           >
             <Route index element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/history"   element={<HistoryPage />} />
+            <Route path="/dashboard"   element={<DashboardPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+            <Route path="/history"     element={<HistoryPage />} />
 
             {/* Head only */}
             <Route
