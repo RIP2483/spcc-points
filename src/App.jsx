@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './router/ProtectedRoute'
 import AppLayout from './components/layout/AppLayout'
 
@@ -15,8 +16,9 @@ import MemberDetailPage from './pages/MemberDetailPage'
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
         <Routes>
           {/* Public */}
           <Route path="/login" element={<LoginPage />} />
@@ -86,6 +88,7 @@ export default function App() {
           success: { iconTheme: { primary: '#2d6a4f', secondary: '#f5f0e8' } },
         }}
       />
-    </AuthProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

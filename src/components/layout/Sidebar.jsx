@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Clock, Users, Building2,
-  ShieldCheck, LogOut, ChevronRight, X, KeyRound, Trophy
+  ShieldCheck, LogOut, ChevronRight, X, KeyRound, Trophy, Sun, Moon
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { useTheme } from '../../context/ThemeContext'
 import ChangePasswordModal from '../admin/ChangePasswordModal'
 import toast from 'react-hot-toast'
 
@@ -19,6 +20,7 @@ const NAV_ITEMS = [
 
 export default function Sidebar({ mobileOpen, onClose }) {
   const { profile, signOut } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [showChangePw, setShowChangePw] = useState(false)
 
@@ -86,8 +88,16 @@ export default function Sidebar({ mobileOpen, onClose }) {
           ))}
         </nav>
 
-        {/* Action buttons — Sign Out + Change Password */}
+        {/* Action buttons — Theme Toggle + Sign Out + Change Password */}
         <div className="px-3 pb-3 space-y-1 border-t border-green-800/40 pt-3">
+          <button
+            onClick={toggleTheme}
+            className="sidebar-link w-full text-left text-green-200 hover:text-white"
+            id="sidebar-theme-toggle-btn"
+          >
+            {theme === 'dark' ? <Sun size={18} className="text-amber-400" /> : <Moon size={18} className="text-blue-300" />}
+            <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+          </button>
           <button
             onClick={handleSignOut}
             className="sidebar-link w-full text-left text-green-200 hover:text-white hover:bg-red-900/40"
