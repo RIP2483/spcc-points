@@ -43,18 +43,19 @@ export default function MemberDetailPage() {
 
     setMember(memberData)
 
-    // Fetch transactions
+    // Fetch transactions (all statuses so member can see pending/rejected)
     const { data: txData } = await supabase
       .from('point_transactions')
       .select(`
-        id, amount, reason, created_at,
+        id, amount, reason, created_at, status,
         awarded_by_user:awarded_by(name, role)
       `)
       .eq('member_id', id)
       .order('created_at', { ascending: false })
 
     setTransactions(txData ?? [])
-    setBalance(txData?.reduce((a, t) => a + t.amount, 0) ?? 0)
+    // Balance only from approved transactions
+    setBalance(txData?.filter(t => t.status === 'approved').reduce((a, t) => a + t.amount, 0) ?? 0)
     setLoading(false)
   }, [profile, id])
 
@@ -133,18 +134,26 @@ export default function MemberDetailPage() {
             ) : (
               <div className="divide-y divide-sand-100">
                 {transactions.map(tx => (
-                  <div key={tx.id} className="flex items-center gap-4 px-6 py-4 hover:bg-sand-50 transition-colors">
+                  <div key={tx.id} className={`flex items-center gap-4 px-6 py-4 hover:bg-sand-50 transition-colors ${tx.status === 'rejected' ? 'opacity-50' : ''}`}>
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm
-                      ${tx.amount >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                      {tx.amount >= 0 ? '+' : '−'}
+                      ${tx.status === 'pending' ? 'bg-amber-100 text-amber-700' : tx.status === 'rejected' ? 'bg-gray-100 text-gray-400' : tx.amount >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                      {tx.status === 'pending' ? '?' : tx.status === 'rejected' ? '✕' : tx.amount >= 0 ? '+' : '−'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-green-900">{tx.reason}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-green-900">{tx.reason}</p>
+                        {tx.status === 'pending' && (
+                          <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">⏳ Pending</span>
+                        )}
+                        {tx.status === 'rejected' && (
+                          <span className="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full">✕ Rejected</span>
+                        )}
+                      </div>
                       <p className="text-xs text-green-600">
                         By {tx.awarded_by_user?.name} · {formatDate(tx.created_at)}
                       </p>
                     </div>
-                    <span className={`font-bold flex-shrink-0 ${tx.amount >= 0 ? 'points-positive' : 'points-negative'}`}>
+                    <span className={`font-bold flex-shrink-0 ${tx.status === 'rejected' ? 'text-gray-400 line-through' : tx.amount >= 0 ? 'points-positive' : 'points-negative'}`}>
                       {formatAmount(tx.amount)}
                     </span>
                   </div>

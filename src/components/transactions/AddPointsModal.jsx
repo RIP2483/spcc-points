@@ -41,6 +41,9 @@ export default function AddPointsModal({ onClose, onSuccess, preselectedMember =
     if (!reason.trim()) return toast.error('Please enter a reason')
 
     const finalAmount = isPositive ? Number(amount) : -Number(amount)
+    const isSecretary = profile.role === 'secretary'
+    // Secretary's actions are auto-approved; everyone else creates a pending request
+    const status = isSecretary ? 'approved' : 'pending'
 
     setLoading(true)
     const { error } = await supabase.from('point_transactions').insert({
@@ -48,13 +51,20 @@ export default function AddPointsModal({ onClose, onSuccess, preselectedMember =
       awarded_by: profile.id,
       amount: finalAmount,
       reason: reason.trim(),
+      status,
+      reviewed_by: isSecretary ? profile.id : null,
+      reviewed_at: isSecretary ? new Date().toISOString() : null,
     })
     setLoading(false)
 
     if (error) {
-      toast.error(error.message || 'Failed to record transaction')
-    } else {
+      toast.error(error.message || 'Failed to submit request')
+    } else if (isSecretary) {
       toast.success(`Points ${isPositive ? 'awarded' : 'deducted'} successfully!`)
+      onSuccess?.()
+      onClose()
+    } else {
+      toast.success('Request submitted — awaiting Secretary approval 📋')
       onSuccess?.()
       onClose()
     }
@@ -143,6 +153,9 @@ export default function AddPointsModal({ onClose, onSuccess, preselectedMember =
                 <p className={`text-sm font-semibold mt-1.5 ${isPositive ? 'points-positive' : 'points-negative'}`}>
                   {isPositive ? '+' : '−'}{amount} pts will be {isPositive ? 'added to' : 'deducted from'}{' '}
                   {selectedMember ? selectedMember.name + "'s" : "the member's"} balance
+                  {profile.role !== 'secretary' && (
+                    <span className="block text-xs text-amber-600 font-medium mt-0.5">⏳ Pending Secretary approval</span>
+                  )}
                 </p>
               )}
             </div>
@@ -174,8 +187,10 @@ export default function AddPointsModal({ onClose, onSuccess, preselectedMember =
             >
               {loading ? (
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              ) : (
+              ) : profile.role === 'secretary' ? (
                 isPositive ? 'Award Points' : 'Deduct Points'
+              ) : (
+                isPositive ? 'Submit Award Request' : 'Submit Deduction Request'
               )}
             </button>
           </div>

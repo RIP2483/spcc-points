@@ -8,7 +8,7 @@ import EditUserModal from '../components/admin/EditUserModal'
 import EditTransactionModal from '../components/admin/EditTransactionModal'
 import DeleteTransactionModal from '../components/admin/DeleteTransactionModal'
 import AddPointsModal from '../components/transactions/AddPointsModal'
-import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download, History, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download, History, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Bell } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminPage() {
@@ -17,6 +17,7 @@ export default function AdminPage() {
   const [members, setMembers] = useState([])
   const [transactions, setTransactions] = useState([])
   const [auditLog, setAuditLog] = useState([])
+  const [pendingRequests, setPendingRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showCreateUser, setShowCreateUser] = useState(false)
@@ -42,6 +43,7 @@ export default function AdminPage() {
         .from('point_transactions')
         .select('member_id, amount')
         .in('member_id', ids)
+        .eq('status', 'approved')   // only approved transactions count toward balance
       txData?.forEach(tx => {
         balances[tx.member_id] = (balances[tx.member_id] ?? 0) + tx.amount
       })
@@ -53,13 +55,26 @@ export default function AdminPage() {
     const { data } = await supabase
       .from('point_transactions')
       .select(`
-        id, amount, reason, created_at,
+        id, amount, reason, created_at, status,
         member:member_id(name, role),
         awarded_by_user:awarded_by(name, role)
       `)
       .order('created_at', { ascending: false })
-      .limit(200)
+      .limit(500)
     setTransactions(data ?? [])
+  }, [])
+
+  const fetchPending = useCallback(async () => {
+    const { data } = await supabase
+      .from('point_transactions')
+      .select(`
+        id, amount, reason, created_at,
+        member:member_id(name, role, department),
+        awarded_by_user:awarded_by(name, role)
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+    setPendingRequests(data ?? [])
   }, [])
 
   const fetchAuditLog = useCallback(async () => {
@@ -73,9 +88,9 @@ export default function AdminPage() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
-    await Promise.all([fetchMembers(), fetchTransactions(), fetchAuditLog()])
+    await Promise.all([fetchMembers(), fetchTransactions(), fetchAuditLog(), fetchPending()])
     setLoading(false)
-  }, [fetchMembers, fetchTransactions, fetchAuditLog])
+  }, [fetchMembers, fetchTransactions, fetchAuditLog, fetchPending])
 
   useEffect(() => { fetchAll() }, [fetchAll])
   useEffect(() => { setTxPage(1) }, [search, tab])
@@ -85,6 +100,24 @@ export default function AdminPage() {
     const { error } = await supabase.from('users').delete().eq('id', userId)
     if (error) toast.error(error.message)
     else { toast.success(`${userName} removed`); fetchAll() }
+  }
+
+  async function handleApprove(txId) {
+    const { error } = await supabase
+      .from('point_transactions')
+      .update({ status: 'approved', reviewed_by: profile.id, reviewed_at: new Date().toISOString() })
+      .eq('id', txId)
+    if (error) toast.error(error.message)
+    else { toast.success('Request approved ✔️'); fetchAll() }
+  }
+
+  async function handleReject(txId) {
+    const { error } = await supabase
+      .from('point_transactions')
+      .update({ status: 'rejected', reviewed_by: profile.id, reviewed_at: new Date().toISOString() })
+      .eq('id', txId)
+    if (error) toast.error(error.message)
+    else { toast.success('Request rejected'); fetchAll() }
   }
 
   const filteredMembers = members.filter(m =>
@@ -153,14 +186,14 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row — only count approved transactions */}
       {!loading && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Total Members', value: members.length, icon: Users },
-            { label: 'Transactions',  value: transactions.length, icon: Clock },
-            { label: 'Points Awarded', value: transactions.filter(t => t.amount > 0).reduce((a, t) => a + t.amount, 0), icon: Plus },
-            { label: 'Points Deducted', value: Math.abs(transactions.filter(t => t.amount < 0).reduce((a, t) => a + t.amount, 0)), icon: ShieldCheck },
+            { label: 'Total Members',   value: members.length, icon: Users },
+            { label: 'Approved Tx',     value: transactions.filter(t => t.status === 'approved').length, icon: Clock },
+            { label: 'Pending Approval', value: pendingRequests.length, icon: Bell },
+            { label: 'Points Awarded', value: transactions.filter(t => t.status === 'approved' && t.amount > 0).reduce((a, t) => a + t.amount, 0), icon: Plus },
           ].map(s => (
             <div key={s.label} className="card p-4 text-center">
               <p className="text-xs text-green-600 font-semibold uppercase tracking-wide mb-1">{s.label}</p>
@@ -171,11 +204,12 @@ export default function AdminPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-sand-200 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 bg-sand-200 rounded-xl p-1 w-fit flex-wrap">
         {[
-          { id: 'members',     label: 'Members',     icon: Users },
-          { id: 'transactions', label: 'Transactions', icon: Clock },
-          { id: 'auditlog',    label: 'Audit Log',   icon: History },
+          { id: 'members',     label: 'Members',       icon: Users },
+          { id: 'transactions', label: 'Transactions',  icon: Clock },
+          { id: 'pending',     label: 'Pending',        icon: Bell,  badge: pendingRequests.length },
+          { id: 'auditlog',    label: 'Audit Log',      icon: History },
         ].map(t => (
           <button
             key={t.id}
@@ -184,7 +218,13 @@ export default function AdminPage() {
               ${tab === t.id ? 'bg-white text-green-900 shadow-sm' : 'text-green-700 hover:text-green-900'}`}
             id={`admin-tab-${t.id}`}
           >
-            <t.icon size={15} /> {t.label}
+            <t.icon size={15} />
+            {t.label}
+            {t.badge > 0 && (
+              <span className="bg-amber-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                {t.badge}
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -359,6 +399,69 @@ export default function AdminPage() {
                   Next <ChevronRight size={16} />
                 </button>
               </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Pending Requests tab */}
+      {tab === 'pending' && (
+        <div className="card overflow-hidden">
+          {loading ? (
+            <div className="p-6 space-y-3">
+              {[...Array(3)].map((_, i) => <div key={i} className="skeleton h-20 rounded-lg" />)}
+            </div>
+          ) : pendingRequests.length === 0 ? (
+            <div className="empty-state">
+              <CheckCircle2 size={36} className="mx-auto mb-3 text-green-400 opacity-60" />
+              <p className="font-semibold text-green-900">All caught up!</p>
+              <p className="text-sm mt-1 text-green-600">No pending point requests.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-sand-100">
+              {pendingRequests.map(req => (
+                <div key={req.id} className="flex items-start gap-4 px-6 py-5 hover:bg-sand-50 transition-colors">
+                  {/* Amount bubble */}
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-black text-base
+                    ${req.amount >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {req.amount >= 0 ? '+' : '−'}{Math.abs(req.amount)}
+                  </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-green-900">
+                      {req.amount >= 0 ? 'Award' : 'Deduct'} {Math.abs(req.amount)} pts
+                      {' '}→ <span className="text-green-700">{req.member?.name ?? '—'}</span>
+                      <span className="text-xs text-green-500 font-normal ml-1 capitalize">
+                        ({roleLabel(req.member?.role ?? '')}
+                        {req.member?.department ? ` · ${req.member.department}` : ''})
+                      </span>
+                    </p>
+                    <p className="text-sm text-green-800 mt-0.5">"{req.reason}"</p>
+                    <p className="text-xs text-green-500 mt-1">
+                      Requested by <strong>{req.awarded_by_user?.name ?? '—'}</strong> · {formatDate(req.created_at)}
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-col sm:flex-row gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => handleApprove(req.id)}
+                      className="btn btn-sm bg-green-600 text-white hover:bg-green-700 flex items-center gap-1"
+                      id={`approve-req-${req.id}`}
+                    >
+                      <CheckCircle2 size={14} /> Approve
+                    </button>
+                    <button
+                      onClick={() => handleReject(req.id)}
+                      className="btn btn-sm bg-red-500 text-white hover:bg-red-600 flex items-center gap-1"
+                      id={`reject-req-${req.id}`}
+                    >
+                      <XCircle size={14} /> Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

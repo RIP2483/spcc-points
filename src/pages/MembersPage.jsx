@@ -33,6 +33,7 @@ export default function MembersPage() {
         .from('point_transactions')
         .select('member_id, amount')
         .in('member_id', ids)
+        .eq('status', 'approved')
       txData?.forEach(tx => {
         balances[tx.member_id] = (balances[tx.member_id] ?? 0) + tx.amount
       })

@@ -23,15 +23,16 @@ export default function DashboardPage() {
     const hasTargets = allMembers?.some(m => canAwardTo(profile, m))
     setCanAward(hasTargets)
 
-    // Get balance (sum of all transactions for this member)
+    // Get balance — only count APPROVED transactions
     const { data: sumData } = await supabase
       .from('point_transactions')
       .select('amount')
       .eq('member_id', profile.id)
+      .eq('status', 'approved')
     const total = sumData?.reduce((acc, t) => acc + t.amount, 0) ?? 0
     setBalance(total)
 
-    // Get recent transactions (last 5)
+    // Get recent approved transactions (last 5)
     const { data: txData } = await supabase
       .from('point_transactions')
       .select(`
@@ -39,6 +40,7 @@ export default function DashboardPage() {
         awarded_by_user:awarded_by(name, role)
       `)
       .eq('member_id', profile.id)
+      .eq('status', 'approved')
       .order('created_at', { ascending: false })
       .limit(5)
     setRecentTx(txData ?? [])

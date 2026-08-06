@@ -25,7 +25,7 @@ export default function DepartmentPage() {
       .eq('department', profile.department)
       .order('name')
 
-    // Get balances for each
+    // Get balances — only count APPROVED transactions
     const ids = memberData?.map(m => m.id) ?? []
     let balances = {}
     if (ids.length > 0) {
@@ -33,6 +33,7 @@ export default function DepartmentPage() {
         .from('point_transactions')
         .select('member_id, amount')
         .in('member_id', ids)
+        .eq('status', 'approved')
       txData?.forEach(tx => {
         balances[tx.member_id] = (balances[tx.member_id] ?? 0) + tx.amount
       })

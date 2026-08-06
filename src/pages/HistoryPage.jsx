@@ -20,7 +20,7 @@ export default function HistoryPage() {
     const { data } = await supabase
       .from('point_transactions')
       .select(`
-        id, amount, reason, created_at,
+        id, amount, reason, created_at, status,
         awarded_by_user:awarded_by(name, role)
       `)
       .eq('member_id', profile.id)
@@ -41,7 +41,8 @@ export default function HistoryPage() {
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
-  const totalBalance = transactions.reduce((a, t) => a + t.amount, 0)
+  // Balance only from approved transactions
+  const totalBalance = transactions.filter(t => t.status === 'approved').reduce((a, t) => a + t.amount, 0)
 
   function handleExportCsv() {
     if (!filtered.length) return toast.error('No transactions to export')
@@ -120,14 +121,18 @@ export default function HistoryPage() {
                   <th>Amount</th>
                   <th>Reason</th>
                   <th>Awarded by</th>
+                  <th>Status</th>
                   <th>Date</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map(tx => (
-                  <tr key={tx.id}>
+                  <tr key={tx.id} className={tx.status === 'rejected' ? 'opacity-50' : ''}>
                     <td>
-                      <span className={`font-bold text-base ${tx.amount >= 0 ? 'points-positive' : 'points-negative'}`}>
+                      <span className={`font-bold text-base ${
+                        tx.status === 'rejected' ? 'text-gray-400 line-through' :
+                        tx.amount >= 0 ? 'points-positive' : 'points-negative'
+                      }`}>
                         {formatAmount(tx.amount)}
                       </span>
                     </td>
@@ -136,6 +141,17 @@ export default function HistoryPage() {
                     </td>
                     <td>
                       <p className="text-sm font-medium text-green-800">{tx.awarded_by_user?.name ?? '—'}</p>
+                    </td>
+                    <td>
+                      {tx.status === 'pending' && (
+                        <span className="text-xs font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full whitespace-nowrap">⏳ Pending</span>
+                      )}
+                      {tx.status === 'approved' && (
+                        <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full whitespace-nowrap">✔ Approved</span>
+                      )}
+                      {tx.status === 'rejected' && (
+                        <span className="text-xs font-semibold bg-red-100 text-red-600 px-2 py-0.5 rounded-full whitespace-nowrap">✕ Rejected</span>
+                      )}
                     </td>
                     <td className="text-sm text-green-700 whitespace-nowrap">
                       {formatDate(tx.created_at)}
