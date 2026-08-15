@@ -57,7 +57,7 @@ export default function LeaderboardPage() {
       const { data: members } = await supabase
         .from('users')
         .select('id')
-        .in('role', ['committee', 'head'])
+        .eq('role', 'committee')
 
       if (!members || members.length === 0) {
         setLoading(false)
