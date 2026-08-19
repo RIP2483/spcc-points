@@ -53,36 +53,20 @@ export default function LeaderboardPage() {
     async function fetchLeaderboard() {
       setLoading(true)
 
-      // Fetch all approved transactions for committee + head members (those in the point system)
+      // Fetch total participant count (committee members only)
       const { data: members } = await supabase
         .from('users')
-        .select('id')
+        .select('id', { count: 'exact', head: false })
         .eq('role', 'committee')
+      setTotalParticipants(members?.length ?? 0)
 
-      if (!members || members.length === 0) {
-        setLoading(false)
-        return
+      // Use a secure RPC function to get top 3 scores server-side.
+      // This bypasses RLS safely — no names or IDs are returned, just scores.
+      const { data: rows, error } = await supabase.rpc('get_leaderboard_top3')
+      if (!error && rows) {
+        setTopThree(rows.map(r => r.points))
       }
 
-      setTotalParticipants(members.length)
-      const ids = members.map(m => m.id)
-
-      const { data: txData } = await supabase
-        .from('point_transactions')
-        .select('member_id, amount')
-        .in('member_id', ids)
-        .eq('status', 'approved')
-
-      // Tally up balances per member
-      const balances = {}
-      ids.forEach(id => { balances[id] = 0 })
-      txData?.forEach(tx => {
-        balances[tx.member_id] = (balances[tx.member_id] ?? 0) + tx.amount
-      })
-
-      // Sort descending, take top 3
-      const sorted = Object.values(balances).sort((a, b) => b - a).slice(0, 3)
-      setTopThree(sorted)
       setLoading(false)
     }
 
