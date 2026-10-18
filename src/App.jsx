@@ -9,6 +9,7 @@ import DashboardPage    from './pages/DashboardPage'
 import HistoryPage      from './pages/HistoryPage'
 import LeaderboardPage  from './pages/LeaderboardPage'
 import DepartmentPage   from './pages/DepartmentPage'
+import HeadHistoryPage  from './pages/HeadHistoryPage'
 import MembersPage      from './pages/MembersPage'
 import AdminPage        from './pages/AdminPage'
 import MemberDetailPage from './pages/MemberDetailPage'
@@ -40,6 +41,14 @@ export default function App() {
               element={
                 <ProtectedRoute roles={['head', 'secretary']}>
                   <DepartmentPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/submissions"
+              element={
+                <ProtectedRoute roles={['head']}>
+                  <HeadHistoryPage />
                 </ProtectedRoute>
               }
             />

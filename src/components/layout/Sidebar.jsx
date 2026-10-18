@@ -2,19 +2,20 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Clock, Users, Building2,
-  ShieldCheck, LogOut, ChevronRight, X, KeyRound, Trophy
+  ShieldCheck, LogOut, ChevronRight, X, KeyRound, Trophy, ClipboardList
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import ChangePasswordModal from '../admin/ChangePasswordModal'
 import toast from 'react-hot-toast'
 
 const NAV_ITEMS = [
-  { to: '/dashboard',   label: 'Dashboard',   icon: LayoutDashboard, roles: ['committee', 'head', 'exco', 'secretary'] },
-  { to: '/leaderboard', label: 'Leaderboard', icon: Trophy,          roles: ['committee', 'head', 'exco', 'secretary'] },
-  { to: '/history',     label: 'My History',  icon: Clock,           roles: ['committee', 'head', 'exco', 'secretary'] },
-  { to: '/department',  label: 'Department',  icon: Building2,       roles: ['head'] },
-  { to: '/members',     label: 'Members',     icon: Users,           roles: ['exco', 'secretary'] },
-  { to: '/admin',       label: 'Admin Panel', icon: ShieldCheck,     roles: ['secretary'] },
+  { to: '/dashboard',   label: 'Dashboard',      icon: LayoutDashboard, roles: ['committee', 'head', 'exco', 'secretary'] },
+  { to: '/leaderboard', label: 'Leaderboard',    icon: Trophy,          roles: ['committee', 'head', 'exco', 'secretary'] },
+  { to: '/history',     label: 'My History',     icon: Clock,           roles: ['committee', 'head', 'exco', 'secretary'] },
+  { to: '/department',  label: 'Department',     icon: Building2,       roles: ['head'] },
+  { to: '/submissions', label: 'My Submissions', icon: ClipboardList,   roles: ['head'] },
+  { to: '/members',     label: 'Members',        icon: Users,           roles: ['exco', 'secretary'] },
+  { to: '/admin',       label: 'Admin Panel',    icon: ShieldCheck,     roles: ['secretary'] },
 ]
 
 export default function Sidebar({ mobileOpen, onClose }) {
