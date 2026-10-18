@@ -7,8 +7,9 @@ import CreateUserModal from '../components/admin/CreateUserModal'
 import EditUserModal from '../components/admin/EditUserModal'
 import EditTransactionModal from '../components/admin/EditTransactionModal'
 import DeleteTransactionModal from '../components/admin/DeleteTransactionModal'
+import ResetMemberPasswordModal from '../components/admin/ResetMemberPasswordModal'
 import AddPointsModal from '../components/transactions/AddPointsModal'
-import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download, History, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Bell } from 'lucide-react'
+import { ShieldCheck, Plus, Search, Trash2, Pencil, Users, Clock, Download, History, ChevronLeft, ChevronRight, CheckCircle2, XCircle, Bell, KeyRound } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function AdminPage() {
@@ -26,6 +27,7 @@ export default function AdminPage() {
   const [deleteTx, setDeleteTx] = useState(null)
   const [editUser, setEditUser] = useState(null)
   const [selectedMember, setSelectedMember] = useState(null)
+  const [resetPwMember, setResetPwMember] = useState(null)
 
   const ITEMS_PER_PAGE = 20
   const [txPage, setTxPage] = useState(1)
@@ -298,6 +300,14 @@ export default function AdminPage() {
                           >
                             <Pencil size={14} />
                           </button>
+                          <button
+                            onClick={() => setResetPwMember(m)}
+                            className="btn btn-sm btn-secondary btn-icon"
+                            title="Reset password"
+                            id={`admin-reset-pw-${m.id}`}
+                          >
+                            <KeyRound size={14} />
+                          </button>
                           {m.id !== profile?.id && (
                             <button
                               onClick={() => handleDeleteUser(m.id, m.name)}
@@ -538,6 +548,9 @@ export default function AdminPage() {
       )}
       {deleteTx && (
         <DeleteTransactionModal transaction={deleteTx} onClose={() => setDeleteTx(null)} onSuccess={fetchAll} />
+      )}
+      {resetPwMember && (
+        <ResetMemberPasswordModal member={resetPwMember} onClose={() => setResetPwMember(null)} />
       )}
     </div>
   )
