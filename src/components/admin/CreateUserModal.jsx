@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { X, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
-import { supabaseAdmin } from '../../lib/supabaseAdmin'
 import toast from 'react-hot-toast'
 
 const ROLES = [
@@ -35,19 +34,15 @@ export default function CreateUserModal({ onClose, onSuccess }) {
 
     setLoading(true)
     try {
-      // Use the Admin API to create the user — this avoids the "already registered"
-      // false-positive that auth.signUp() produces for unconfirmed emails, and
-      // creates the account instantly confirmed (no email verification needed).
-      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-        email: form.email.trim(),
-        password: form.password,
-        email_confirm: true,   // mark as confirmed immediately — no email link needed
+      // Use a SECURITY DEFINER Postgres function to create the auth user
+      // server-side — no service role key needed on the frontend.
+      const { data: userId, error: authError } = await supabase.rpc('admin_create_user', {
+        p_email:    form.email.trim(),
+        p_password: form.password,
       })
 
       if (authError) throw authError
-      if (!authData.user) throw new Error('Failed to create account (no user returned)')
-
-      const userId = authData.user.id
+      if (!userId) throw new Error('Failed to create account (no user ID returned)')
 
       const { error: profileError } = await supabase.from('users').insert({
         id: userId,
