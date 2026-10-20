@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { X, Eye, EyeOff } from 'lucide-react'
 import { supabase } from '../../lib/supabaseClient'
-import { createClient } from '@supabase/supabase-js'
+import { supabaseAdmin } from '../../lib/supabaseAdmin'
 import toast from 'react-hot-toast'
 
 const ROLES = [
@@ -35,17 +35,13 @@ export default function CreateUserModal({ onClose, onSuccess }) {
 
     setLoading(true)
     try {
-      // Create a temporary client that doesn't persist the session,
-      // so we can sign up a new user without logging Tabeer out.
-      const tempClient = createClient(
-        import.meta.env.VITE_SUPABASE_URL,
-        import.meta.env.VITE_SUPABASE_ANON_KEY,
-        { auth: { persistSession: false } }
-      )
-
-      const { data: authData, error: authError } = await tempClient.auth.signUp({
+      // Use the Admin API to create the user — this avoids the "already registered"
+      // false-positive that auth.signUp() produces for unconfirmed emails, and
+      // creates the account instantly confirmed (no email verification needed).
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: form.email.trim(),
         password: form.password,
+        email_confirm: true,   // mark as confirmed immediately — no email link needed
       })
 
       if (authError) throw authError
